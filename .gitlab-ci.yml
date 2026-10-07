@@ -1,0 +1,40 @@
+image: python:3.11-slim
+
+stages:
+  - lint
+  - invariant_audit
+  - release_attestation
+
+variables:
+  AUTHORIZED_WALLET: "0xC6F86e170411182114FcCdb28793dC76B5e8D144"
+
+lint_and_unit_test:
+  stage: lint
+  script:
+    - python3 -m py_compile agentic_flow.py test_agentic_flow.py
+    - python3 -m unittest -v test_agentic_flow.py
+
+audit_security_invariants:
+  stage: invariant_audit
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BEFORE_SHA && $CI_COMMIT_BEFORE_SHA != "0000000000000000000000000000000000000000"'
+  script:
+    - python3 agentic_flow.py
+  artifacts:
+    when: always
+    paths:
+      - pipeline_attestation.json
+    expire_in: 30 days
+
+attestation_report:
+  stage: release_attestation
+  needs:
+    - job: audit_security_invariants
+      artifacts: true
+  script:
+    - python3 -c "import json; d=json.load(open('pipeline_attestation.json')); assert d['invariant_passed'] is True; print(d['audit_verdict'])"
+  artifacts:
+    paths:
+      - pipeline_attestation.json
+    expire_in: 30 days

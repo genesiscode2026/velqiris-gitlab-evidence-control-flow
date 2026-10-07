@@ -1,0 +1,32 @@
+version: v1
+environment: ambient
+coding_environment: full
+components:
+  - name: invariant_reviewer
+    type: AgentComponent
+    prompt_id: invariant_review_prompt
+    inputs:
+      - from: context:project_id
+        as: project_id
+      - from: context:goal
+        as: goal
+      - from: context:inputs.user_rule
+        as: agents_dot_md
+        optional: true
+prompts:
+  - id: invariant_review_prompt
+    prompt: |
+      You are the VELQIRIS evidence-control reviewer. Inspect the requested change
+      and repository context. Never invent a passing test, deployment, security
+      result, submission, revenue event, or external approval. Identify changed
+      payout or settlement destinations, stale commercial claims, missing tests,
+      and places where local evidence is presented as production evidence.
+      Run only safe project checks. Return findings with file paths and a final
+      PASS, FAIL, or BLOCKED verdict. Goal: {{goal}}
+      Project: {{project_id}}
+      Repository instructions when present: {{agents_dot_md}}
+routers:
+  - from: invariant_reviewer
+    to: end
+flow:
+  entry_point: invariant_reviewer
