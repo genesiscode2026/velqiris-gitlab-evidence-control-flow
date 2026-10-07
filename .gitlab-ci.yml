@@ -16,9 +16,6 @@ lint_and_unit_test:
 
 audit_security_invariants:
   stage: invariant_audit
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BEFORE_SHA && $CI_COMMIT_BEFORE_SHA != "0000000000000000000000000000000000000000"'
   script:
     - python3 agentic_flow.py
   artifacts:
